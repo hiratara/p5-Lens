@@ -1,8 +1,46 @@
 package Lens;
+use Lens::Comonad::Costate;
+use Moo;
+use namespace::clean;
+use overload ('.' => "chain", fallback => 1);
 
-use strict;
-use 5.008_005;
 our $VERSION = '0.01';
+
+has coalgebra => ( # coalgebra of costate comonad
+    is => 'ro', isa => sub {ref $_[0] eq 'CODE' or die}, requires => 1,
+);
+
+sub get {
+    my ($self, $data) = @_;
+    $self->coalgebra->($data)->state;
+}
+
+sub set {
+    my ($self, $data, $value) = @_;
+    $self->coalgebra->($data)->func->($value);
+}
+
+# d -> (d' -> d, d')
+# d' -> (v -> d', v)
+# d -> (v -> d, v)
+sub chain {
+    my ($self, $other) = @_;
+    Lens->new(
+        coalgebra => sub {
+            my $data = shift;
+            Lens::Comonad::Costate->new(
+                func  => sub {
+                    my $state = shift;
+                    $self->set(
+                        $data,
+                        $other->set($self->get($data), $state)
+                    );
+                },
+                state => $other->get($self->get($data)),
+            );
+        },
+    );
+}
 
 1;
 __END__
