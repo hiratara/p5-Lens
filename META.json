@@ -36,12 +36,12 @@
       },
       "runtime" : {
          "requires" : {
-            "perl" : "5.008005"
+            "Moo" : "0"
          }
       },
       "test" : {
          "requires" : {
-            "Test::More" : "0.96"
+            "Test::More" : "0"
          }
       }
    },
