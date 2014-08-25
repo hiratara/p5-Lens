@@ -49,6 +49,23 @@ my $name_lens = Lens->new(
     },
 );
 
+sub substr_lens ($$) {
+    my ($offset, $length) = @_;
+    Lens->new(
+        coalgebra => sub {
+            my $data = shift;
+            Lens::Comonad::Costate->new(
+                func => sub {
+                    my $str = shift;
+                    (substr my $cloned = $data, $offset, $length) = $str;
+                    $cloned;
+                },
+                state => (substr $data, $offset, $length),
+            );
+        },
+    );
+}
+
 my $talk = Talk->new(
     speaker => Speaker->new(name => 'Masahiro Homma'),
     name    => "I love monads",
@@ -64,5 +81,13 @@ is +($speaker_lens . $name_lens)->($talk),
    "Masahiro Homma";
 is +($speaker_lens . $name_lens)->($talk, "hiratara")->speaker->name,
    "hiratara";
+
+is +($speaker_lens . $name_lens . substr_lens 8, 1)->($talk),
+   " ";
+is +($speaker_lens . $name_lens . substr_lens 8, 1)->($talk, " hiratara ")
+                                                   ->speaker->name,
+   "Masahiro hiratara Homma";
+
+is $talk->speaker->name, 'Masahiro Homma';
 
 done_testing;
