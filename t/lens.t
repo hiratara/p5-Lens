@@ -60,4 +60,9 @@ is +$name_lens->set($talk, "I love comonads")->name, "I love comonads";
 is +($speaker_lens . $name_lens)->set($talk, "hiratara")->speaker->name,
    "hiratara";
 
+is +($speaker_lens . $name_lens)->($talk),
+   "Masahiro Homma";
+is +($speaker_lens . $name_lens)->($talk, "hiratara")->speaker->name,
+   "hiratara";
+
 done_testing;

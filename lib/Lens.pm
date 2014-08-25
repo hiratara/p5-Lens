@@ -2,7 +2,10 @@ package Lens;
 use Lens::Comonad::Costate;
 use Moo;
 use namespace::clean;
-use overload ('.' => "chain", fallback => 1);
+use overload (
+    '.' => 'chain', '&{}' => 'accessor',
+    fallback => 1
+);
 
 our $VERSION = '0.01';
 
@@ -20,9 +23,6 @@ sub set {
     $self->coalgebra->($data)->func->($value);
 }
 
-# d -> (d' -> d, d')
-# d' -> (v -> d', v)
-# d -> (v -> d, v)
 sub chain {
     my ($self, $other) = @_;
     Lens->new(
@@ -40,6 +40,11 @@ sub chain {
             );
         },
     );
+}
+
+sub accessor {
+    my $self = shift;
+    sub { @_ > 1 ? $self->set(@_) : $self->get(@_) };
 }
 
 1;
