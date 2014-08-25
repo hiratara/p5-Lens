@@ -17,37 +17,24 @@ use Test::More;
 use Lens::Comonad::Costate;
 use Lens;
 
-my $speaker_lens = Lens->new(
-    coalgebra => sub {
-        my $talk = shift;
-        Lens::Comonad::Costate->new(
-            func => sub {
-                my $speaker = shift;
-                (ref $talk)->new(
-                    %$talk,
-                    speaker => $speaker,
-                )
-            },
-            state => $talk->speaker,
-        );
-    },
-);
-
-my $name_lens = Lens->new(
-    coalgebra => sub {
-        my $data = shift;
-        Lens::Comonad::Costate->new(
-            func => sub {
-                my $name = shift;
-                (ref $data)->new(
-                    %$data,
-                    name => $name,
-                )
-            },
-            state => $data->name,
-        );
-    },
-);
+sub lens ($) {
+    my $field = shift;
+    Lens->new(
+        coalgebra => sub {
+            my $data = shift;
+            Lens::Comonad::Costate->new(
+                func => sub {
+                    my $value = shift;
+                    (ref $data)->new(
+                        %$data,
+                        $field => $value,
+                    )
+                },
+                state => $data->$field,
+            );
+        }
+    );
+};
 
 sub substr_lens ($$) {
     my ($offset, $length) = @_;
@@ -71,20 +58,20 @@ my $talk = Talk->new(
     name    => "I love monads",
 );
 
-is +$name_lens->get($talk), "I love monads";
-is +$name_lens->set($talk, "I love comonads")->name, "I love comonads";
+is lens('name')->get($talk), "I love monads";
+is lens('name')->set($talk, "I love comonads")->name, "I love comonads";
 
-is +($speaker_lens . $name_lens)->set($talk, "hiratara")->speaker->name,
+is +(lens('speaker') . lens('name'))->set($talk, "hiratara")->speaker->name,
    "hiratara";
 
-is +($speaker_lens . $name_lens)->($talk),
+is +(lens('speaker') . lens('name'))->($talk),
    "Masahiro Homma";
-is +($speaker_lens . $name_lens)->($talk, "hiratara")->speaker->name,
+is +(lens('speaker') . lens('name'))->($talk, "hiratara")->speaker->name,
    "hiratara";
 
-is +($speaker_lens . $name_lens . substr_lens 8, 1)->($talk),
+is +(lens('speaker') . lens('name') . substr_lens 8, 1)->($talk),
    " ";
-is +($speaker_lens . $name_lens . substr_lens 8, 1)->($talk, " hiratara ")
+is +(lens('speaker') . lens('name') . substr_lens 8, 1)->($talk, " hiratara ")
                                                    ->speaker->name,
    "Masahiro hiratara Homma";
 
