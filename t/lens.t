@@ -14,44 +14,7 @@ has name    => (is => 'ro', requires => 1);
 
 package main;
 use Test::More;
-use Lens::Comonad::Costate;
-use Lens;
-
-sub lens ($) {
-    my $field = shift;
-    Lens->new(
-        coalgebra => sub {
-            my $data = shift;
-            Lens::Comonad::Costate->new(
-                func => sub {
-                    my $value = shift;
-                    (ref $data)->new(
-                        %$data,
-                        $field => $value,
-                    )
-                },
-                state => $data->$field,
-            );
-        }
-    );
-};
-
-sub substr_lens ($$) {
-    my ($offset, $length) = @_;
-    Lens->new(
-        coalgebra => sub {
-            my $data = shift;
-            Lens::Comonad::Costate->new(
-                func => sub {
-                    my $str = shift;
-                    (substr my $cloned = $data, $offset, $length) = $str;
-                    $cloned;
-                },
-                state => (substr $data, $offset, $length),
-            );
-        },
-    );
-}
+use Lenses qw(lens substr_lens);
 
 my $talk = Talk->new(
     speaker => Speaker->new(name => 'Masahiro Homma'),
