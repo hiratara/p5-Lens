@@ -5,7 +5,7 @@ use Lens;
 use Lens::Comonad::Costate;
 use Exporter qw(import);
 
-our @EXPORT_OK = qw(lens substr_lens);
+our @EXPORT_OK = qw(lens hash_lens substr_lens);
 
 sub lens ($) {
     my $field = shift;
@@ -21,6 +21,22 @@ sub lens ($) {
                     )
                 },
                 state => $data->$field,
+            );
+        }
+    );
+}
+
+sub hash_lens ($) {
+    my $field = shift;
+    Lens->new(
+        coalgebra => sub {
+            my $hash = shift;
+            Lens::Comonad::Costate->new(
+                func => sub {
+                    my $value = shift;
+                    +{ %$hash, $field => $value };
+                },
+                state => $hash->{$field},
             );
         }
     );
